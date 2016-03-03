@@ -7,45 +7,52 @@ var request = require('request');
 var cheerio = require('cheerio');
 const notifier = require('node-notifier');
 
-var busStation = process.argv[2];//.toUpperCase();
+var busStation = process.argv[2].toUpperCase();
 if(busStation == null){
     console.log('example usage: node stcp IPO5');
 }
 
 var url = 'http://www.stcp.pt/pt/itinerarium/soapclient.php?codigo='+busStation;
 
-
-request(url, (function(err, resp, body) {
-    if (err)
-        throw err;
-    $ = cheerio.load(body);
-    $('#smsBusResults .even').each(function() {
-        parsed = $(this).text().trim().replace(/\s\s+/g, ',').split(',');
-        //console.log(parsed[0] + ': ' + parsed[1]);
-        //console.log(parsed);
-
-        if(parsed[3] == null){
-            console.log(parsed[0] + ': ' + parsed[1] + ' ' + parsed[2] + ' 0');
+function processTheInfo(parsedInfo){
+    if(parsedInfo[3] == null){
+        console.log(parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2]);
+        //console.log('0min ' + parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2]);
+        notifier.notify({
+            title: 'You just missed '+parsedInfo[0],
+            message: parsedInfo[0]+' now passing in '+busStation,
+            sound: true,
+            wait: false
+        }, function(error, response) {
+            console.log(response);
+        });
+    }else{
+        console.log(parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2] + ' ' + parsedInfo[3]);
+        //console.log(parsedInfo[3] + ' ' + parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2]);
+        if(parsedInfo[3].match(/\d/g) <= 10){
             notifier.notify({
-                title: 'You just missed '+parsed[0],
-                message: parsed[0]+' now passing in '+busStation,
+                title: parsedInfo[3]+' to '+parsedInfo[0],
+                message: 'at '+busStation,
                 sound: true,
                 wait: false
             }, function(error, response) {
                 console.log(response);
             });
-        }else{
-            console.log(parsed[0] + ': ' + parsed[1] + ' ' + parsed[2] + ' ' + parsed[3]);
-            if(parsed[3].match(/\d/g) <= 10){
-                notifier.notify({
-                    title: parsed[3]+' to '+parsed[0],
-                    message: 'at '+busStation,
-                    sound: true,
-                    wait: false
-                }, function(error, response) {
-                    console.log(response);
-                });
-            }
         }
+    }
+};
+
+function pedido() {
+    request(url, function(err, resp, body) {
+        if (err)
+            throw err;
+        $ = cheerio.load(body);
+        $('#smsBusResults .even').each(function() {
+            parsedInfo = $(this).text().trim().replace(/\s\s+/g, ',').split(',');
+            processTheInfo(parsedInfo);
+        });
     });
-}))
+};
+
+pedido();
+setInterval(pedido, 30000);
