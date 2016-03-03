@@ -6,7 +6,7 @@
 var request = require('request');
 var cheerio = require('cheerio');
 
-var url = 'http://www.stcp.pt/pt/itinerarium/soapclient.php?codigo=IPO5';
+var url = 'http://www.stcp.pt/pt/itinerarium/soapclient.php?codigo='; url += process.argv[2]; //example usage: node stcp IPO5
 
 request(url, (function(err, resp, body) {
     if (err)
