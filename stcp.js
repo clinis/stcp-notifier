@@ -7,9 +7,12 @@ var request = require('request');
 var cheerio = require('cheerio');
 const notifier = require('node-notifier');
 
-var busStation = process.argv[2].toUpperCase();
+var busStation = process.argv[2];
 if(busStation == null){
     console.log('example usage: node stcp IPO5');
+    process.exit(1);
+} else {
+    busStation = busStation.toUpperCase();
 }
 
 var url = 'http://www.stcp.pt/pt/itinerarium/soapclient.php?codigo='+busStation;
@@ -29,7 +32,7 @@ function processTheInfo(parsedInfo){
     }else{
         console.log(parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2] + ' ' + parsedInfo[3]);
         //console.log(parsedInfo[3] + ' ' + parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2]);
-        if(parsedInfo[3].match(/\d/g) <= 10){
+        if(parsedInfo[3].match(/\d+/g) <= 10){
             notifier.notify({
                 title: parsedInfo[3]+' to '+parsedInfo[0],
                 message: 'at '+busStation,
@@ -42,7 +45,7 @@ function processTheInfo(parsedInfo){
     }
 };
 
-function pedido() {
+function reqst() {
     request(url, function(err, resp, body) {
         if (err)
             throw err;
@@ -54,5 +57,5 @@ function pedido() {
     });
 };
 
-pedido();
-setInterval(pedido, 30000);
+reqst();
+setInterval(reqst, 30000);
