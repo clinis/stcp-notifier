@@ -1,0 +1,12 @@
+{
+  "name": "stcparser",
+  "version": "0.0.1",
+  "main":"stcp.js",
+  "author":"clinis",
+  "description": "STCP Parser",
+  "dependencies": {
+    "request": "latest",
+    "cheerio": "latest",
+    "node-notifier": "latest"
+  }
+}
