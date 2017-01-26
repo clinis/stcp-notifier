@@ -1,8 +1,3 @@
-// parsing da página de uma paragem da STCP
-//
-// baseado no artigo: http://blog.miguelgrinberg.com/post/easy-web-scraping-with-nodejs
-//
-
 var request = require('request');
 var cheerio = require('cheerio');
 const notifier = require('node-notifier');
