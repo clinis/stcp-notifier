@@ -1,12 +1,25 @@
 {
   "name": "stcparser",
-  "version": "0.0.1",
-  "main":"stcp.js",
-  "author":"clinis",
-  "description": "STCP Parser",
+  "version": "0.0.2",
+  "description": "Node app to get the time of STCP buses.",
+  "author": "clinis",
+  "license": "MIT",
+  "main": "stcp.js",
+  "bin": {
+    "stcp": "./stcp.js"
+  },
   "dependencies": {
     "request": "latest",
     "cheerio": "latest",
-    "node-notifier": "latest"
-  }
+    "node-notifier": "latest",
+    "commander": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clinis/STCParser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/clinis/STCParser/issues"
+  },
+  "homepage": "https://github.com/clinis/STCParser#readme"
 }

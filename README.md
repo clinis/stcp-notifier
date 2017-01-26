@@ -14,7 +14,8 @@ This way I don't loose my bus and I don't need to waste time waiting at the stop
 ## Functionality
 What is does:
 - automatic requests every minute;
-- notifications when bus is less than 10 minutes away.
+- notifications when bus is less than 10 minutes away;
+- filter results to a specific line.
 
 ## Explanation
 
@@ -23,7 +24,7 @@ STCP provides a tool to see the remaining times of the buses at any of its bus s
 The tool functions with unique station codes.
 For example: `AAL1` in [`http://www.stcp.pt/pt/viajar/horarios/?paragem=AAL1&t=smsbus`](http://www.stcp.pt/pt/viajar/horarios/?paragem=AAL1&t=smsbus)
 
-Peeking at the source code of the page, it was possible to discover a more stripped-down version of this tool at [`http://www.stcp.pt/pt/itinerarium/soapclient.php?codigo=aal1`](http://www.stcp.pt/pt/itinerarium/soapclient.php?codigo=aal1) which returns very little HTML and the information about the next buses.
+Peeking at the source code of the page, it was possible to discover a more stripped-down version of this tool at [`http://www.stcp.pt/itinerarium/soapclient.php?codigo=AAl1`](http://www.stcp.pt/itinerarium/soapclient.php?codigo=AAl1) which returns very little HTML and the information about the next buses.
 Here is an example of the returned HTML:
 
 ~~~html
