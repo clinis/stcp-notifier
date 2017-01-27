@@ -52,26 +52,44 @@ function processTheInfo(parsedInfo){
 }
 
 function req() {
-  url = 'http://www.stcp.pt/itinerarium/soapclient.php?codigo='+station+'&linha='+program.line;
-
   request(url, function(err, resp, body) {
-    if (err) {
+    if (err){
       throw err;
     }
 
     $ = cheerio.load(body);
 
-    console.log("------ " +getTime()+ " ------");
-    $('#smsBusResults .even').each(function() {
-      parsedInfo = $(this).text().trim().replace(/\s\s+/g, ',').split(',');
-      processTheInfo(parsedInfo);
-    });
+    var erros = $('.msgBox span').text();
+
+    if ( erros.substring(0,17) == "Nao ha autocarros" ) {
+      console.log("------ " +getTime()+ " ------");
+      console.log("There are no buses the next 60 minutes.");
+    } else if ( erros.substring(0,18) == "Por favor, utilize" ) {
+      console.log("Please, enter a valid bus stop code.");
+      process.exit()
+    } else {
+      console.log("------ " +getTime()+ " ------");
+
+      var parsed = $('#smsBusResults .even');
+      if (parsed.length > 0) {
+        parsed.each(function() {
+          parsedInfo = $(this).text().trim().replace(/\s\s+/g, ',').split(',');
+          processTheInfo(parsedInfo);
+        });
+      } else {
+        console.log("No buses. Either because:\n a) there are no buses on the next 60 minutes \n b) line "+line+" doesn't exist. ");
+        process.exit();
+      }
+    }
   });
 }
+
 
 if(!program.args.length) {
   program.help();
 } else {
+  var line = (program.line === undefined) ? 0 : program.line;
+  var url = 'http://www.stcp.pt/itinerarium/soapclient.php?codigo='+station+'&linha='+line;
   req();
-  setInterval(req, 30000);
+  setInterval(req, 30000); // 30000
 }
