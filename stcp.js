@@ -63,7 +63,7 @@ function req() {
 
     if ( erros.substring(0,17) == "Nao ha autocarros" ) {
       console.log("------ " +getTime()+ " ------");
-      console.log("There are no buses the next 60 minutes.");
+      console.log("There are no buses on the next 60 minutes.");
     } else if ( erros.substring(0,18) == "Por favor, utilize" ) {
       console.log("Please, enter a valid bus stop code.");
       process.exit()
@@ -77,13 +77,37 @@ function req() {
           processTheInfo(parsedInfo);
         });
       } else {
-        console.log("No buses. Either because:\n a) there are no buses on the next 60 minutes \n b) line "+line+" doesn't exist. ");
-        process.exit();
+        getLinesOfStation(station);
       }
     }
   });
 }
 
+function getLinesOfStation (station) {
+  var stationLines = [];
+  var url = 'http://www.stcp.pt/pt/itinerarium/callservice.php?action=srchstoplines&stopname='+station;
+
+  request(url, function(err, resp, body) {
+    if (err){
+      throw err;
+    }
+
+    var json = JSON.parse(body);
+
+    for (var x = 0; x < json[0].lines.length; x++) {
+      stationLines.push(json[0].lines[x].code);
+    }
+
+    if (stationLines.indexOf(line) > -1) {
+      console.log("There are no buses on the next 60 minutes");
+    } else {
+      console.log("Line "+line+" doesn't pass on "+station);
+      console.log("Here are the lines that pass on "+station+":");
+      console.log(stationLines);
+      process.exit();
+    }
+  });
+}
 
 if(!program.args.length) {
   program.help();
