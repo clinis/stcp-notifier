@@ -1,6 +1,6 @@
 {
   "name": "stcparser",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Node app to get the time of STCP buses.",
   "author": "clinis",
   "license": "MIT",
@@ -12,7 +12,8 @@
     "request": "latest",
     "cheerio": "latest",
     "node-notifier": "latest",
-    "commander": "latest"
+    "commander": "latest",
+    "blessed": "latest"
   },
   "repository": {
     "type": "git",
