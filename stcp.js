@@ -17,7 +17,7 @@ program
   .arguments('<busStopCode>')
   .option('-l, --line <lineNumber>','See only buses of a certain line. Example: 205')
   .action(function (busStopCode) {
-     station = busStopCode.toUpperCase();
+    station = busStopCode.toUpperCase();
   });
 program.parse(process.argv);
 
@@ -55,16 +55,24 @@ var list = blessed.text({
   align: 'left'
 });
 
+// Create a top left text area
+var reqtimetext = blessed.text({
+  top: '0',
+  left: '0',
+
+  align: 'left'
+});
+
 function getTime() {
-    var date = new Date();
+  var date = new Date();
 
-    var hour = date.getHours();
-    hour = (hour < 10 ? "0" : "") + hour;
+  var hour = date.getHours();
+  hour = (hour < 10 ? "0" : "") + hour;
 
-    var min  = date.getMinutes();
-    min = (min < 10 ? "0" : "") + min;
+  var min  = date.getMinutes();
+  min = (min < 10 ? "0" : "") + min;
 
-    return hour + ":" + min;
+  return hour + ":" + min;
 }
 
 function getLinesOfStation (station) {
@@ -87,7 +95,6 @@ function getLinesOfStation (station) {
 
 function processTheInfo(parsedInfo){
   if(parsedInfo[3] == null){
-    //console.log(parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2]);
     notifier.notify({
       title: 'You just missed '+parsedInfo[0],
       message: parsedInfo[0]+' now passing in '+station,
@@ -95,7 +102,6 @@ function processTheInfo(parsedInfo){
       wait: false
     });
   }else{
-    //console.log(parsedInfo[0] + ': ' + parsedInfo[1] + ' ' + parsedInfo[2] + ' ' + parsedInfo[3]);
     if(parsedInfo[3].match(/\d+/g) <= 10){
       notifier.notify({
         title: parsedInfo[3]+' to '+parsedInfo[0],
@@ -115,16 +121,21 @@ function req() {
     infos = [];
 
     $ = cheerio.load(body);
+    screen.append(reqtimetext);
 
     var erros = $('.msgBox span').text();
 
     if ( erros.substring(0,17) == "Nao ha autocarros" ) {         // got no buses warning
-      console.log("------ " +getTime()+ " ------");
-      console.log("There are no buses on the next 60 minutes.");
+      reqtimetext.setText("Last request: "+getTime());
+      reqtimetext.pushLine("There are no buses on the next 60 minutes.");
     } else if ( erros.substring(0,18) == "Por favor, utilize" ) { // got wrong station code warning
-      console.log("Please, enter a valid bus stop code.");
+      list.setText("Please, enter a valid bus stop code.");
+      clearInterval(intervalID);
+      reqtimetext.setText("Timmer stopped. You can quit the app now.");
+      screen.append(list);
     } else {                                                      // got no warnings
-      console.log("------ " +getTime()+ " ------");
+      reqtimetext.setText("Last request: "+getTime());
+
       infos.push(["Linha","Destino","Horas","Tempo"]);
       var parsed = $('#smsBusResults .even');
       if (parsed.length > 0) {                                    // if found any time result
@@ -137,16 +148,11 @@ function req() {
         screen.append(box);
       } else {                                                  // if didn't found any time result
         if (stationLines.indexOf(line) > -1) {
-          //console.log("There are no buses on the next 60 minutes");
           list.setText("There are no buses on the next 60 minutes");
         } else {
-          //console.log("Line "+line+" doesn't pass on "+station);
-          //console.log("Here are the lines that pass on "+station+":");
-          //console.log(stationLines);
-          list.setText("Line "+line+" doesn't pass on "+station+".\
-          Here are the lines that pass on "+station+":\
-          "+stationLines.toString() );
-          //process.exit();
+          list.setText("Line "+line+" doesn't pass on "+station+".\n\n Here are the lines that pass on "+station+":\n "+stationLines.toString() );
+          clearInterval(intervalID);
+          reqtimetext.setText("Timmer stopped. You can quit the app now.");
         }
         screen.append(list);
       }
@@ -158,10 +164,10 @@ function req() {
 if(!program.args.length) {  // if no arguments passed
   program.help();           // print help
 } else {                    // else, normal program
-  var line = (program.line === undefined) ? 0 : program.line;
+  var line = (program.line === undefined) ? 0 : program.line.toUpperCase();
   var url = 'http://www.stcp.pt/itinerarium/soapclient.php?codigo='+station+'&linha='+line;
   getLinesOfStation(station);
 
   req();
-  setInterval(req, 30000); // 30000ms = 30s
+  var intervalID = setInterval(req, 30000); // 30000ms = 30s
 }
