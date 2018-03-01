@@ -11,7 +11,7 @@ var infos = [];
 
 // Programm argumments and commands
 program
-  .version('0.0.2')
+  .version('0.0.3')
   .description('Get the remaining times of the next buses at a bus stop using that bus stop code.')
   .usage('<bus stop code>. Example: stcp IPO5')
   .arguments('<busStopCode>')

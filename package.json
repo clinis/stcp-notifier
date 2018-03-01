@@ -2,23 +2,31 @@
   "name": "stcparser",
   "version": "0.0.3",
   "description": "Node app to get the time of STCP buses.",
-  "author": "clinis",
-  "license": "MIT",
   "main": "stcp.js",
   "bin": {
     "stcp": "./stcp.js"
   },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
-    "request": "latest",
-    "cheerio": "latest",
-    "node-notifier": "latest",
-    "commander": "latest",
-    "blessed": "latest"
+    "blessed": "^0.1.81",
+    "cheerio": "^1.0.0-rc.2",
+    "commander": "^2.13.0",
+    "node-notifier": "^5.2.1",
+    "request": "^2.83.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/clinis/STCParser.git"
   },
+  "keywords": [
+    "STCP",
+    "Porto",
+    "bus"
+  ],
+  "author": "clinis",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/clinis/STCParser/issues"
   },
