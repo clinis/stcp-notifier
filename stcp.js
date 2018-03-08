@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 
 const program = require('commander');
-var request = require('request');
-var cheerio = require('cheerio');
+const request = require('request');
+const cheerio = require('cheerio');
 const notifier = require('node-notifier');
-var blessed = require('blessed');
+const blessed = require('blessed');
+const path = require('path');
 
-// <<<---- OFFLINE ------>>>>>>> \\
-const bodyOffline = "<div id=\"smsBusHeader\"><div class=\"filtro\"><a href=\"http://www.stcp.pt/smsBusMicroSite/index.html\" target=\"_blank\"><img border=\"0\" src=\"/temas/stcp/imgs/logo-smsbus.jpg\" /></a><form action=\"\" id=\"frmFiltro\"><label for=\"linhasmsbus\">Filtar por linha</label><input type=\"hidden\" name=\"paragem\" value=\"aal1\" /><input type=\"hidden\" name=\"t\" value=\"smsbus\" /><select id=\"linhasmsbus\" name=\"linha\" onchange=\"javascript: frmFiltro.submit();\"><option value=\"0\">---</option><option value=\"3M\">3M </option><option value=\"4M\">4M </option><option value=\"5M\">5M </option></select></form></div><div class=\"clear\"></div></div><table id=\"smsBusResults\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><th>Linha</th><th>Hora Prevista</th><th>Tempo de Espera</th></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_5m\" title=\"\" href=\"/pt/viajar/linhas/?linha=5M \">5M </a></li></ul>&nbsp;ERMESINDE(ES</td><td><i>00:58</i></td><td>1min</td></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_4m\" title=\"\" href=\"/pt/viajar/linhas/?linha=4M \">4M </a></li></ul>&nbsp;AV. ALIADOS</td><td><i>01:39</i></td><td>42min</td></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_3m\" title=\"\" href=\"/pt/viajar/linhas/?linha=3M \">3M </a></li></ul>&nbsp;AV. ALIADOS</td><td><i>01:50</i></td><td>53min</td></tr></table>"
-
+// <<<---- TEMPLATE HTML ------>>>>>>> \\
+const HTMLOffline = "<div id=\"smsBusHeader\"><div class=\"filtro\"><a href=\"http://www.stcp.pt/smsBusMicroSite/index.html\" target=\"_blank\"><img border=\"0\" src=\"/temas/stcp/imgs/logo-smsbus.jpg\" /></a><form action=\"\" id=\"frmFiltro\"><label for=\"linhasmsbus\">Filtar por linha</label><input type=\"hidden\" name=\"paragem\" value=\"aal1\" /><input type=\"hidden\" name=\"t\" value=\"smsbus\" /><select id=\"linhasmsbus\" name=\"linha\" onchange=\"javascript: frmFiltro.submit();\"><option value=\"0\">---</option><option value=\"3M\">3M </option><option value=\"4M\">4M </option><option value=\"5M\">5M </option></select></form></div><div class=\"clear\"></div></div><table id=\"smsBusResults\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><th>Linha</th><th>Hora Prevista</th><th>Tempo de Espera</th></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_5m\" title=\"\" href=\"/pt/viajar/linhas/?linha=5M \">5M </a></li></ul>&nbsp;ERMESINDE(ES</td><td><i>00:58</i></td><td>1min</td></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_4m\" title=\"\" href=\"/pt/viajar/linhas/?linha=4M \">4M </a></li></ul>&nbsp;AV. ALIADOS</td><td><i>01:39</i></td><td>42min</td></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_3m\" title=\"\" href=\"/pt/viajar/linhas/?linha=3M \">3M </a></li></ul>&nbsp;AV. ALIADOS</td><td><i>01:50</i></td><td>53min</td></tr></table>"
+const HTMLAPassar = "<div id=\"smsBusHeader\"><div class=\"filtro\"><a href=\"http://www.stcp.pt/smsBusMicroSite/index.html\" target=\"_blank\"><img border=\"0\" src=\"/temas/stcp/imgs/logo-smsbus.jpg\" /></a><form action=\"\" id=\"frmFiltro\"><label for=\"linhasmsbus\">Filtar por linha</label><input type=\"hidden\" name=\"paragem\" value=\"srpt1\" /><input type=\"hidden\" name=\"t\" value=\"smsbus\" /><select id=\"linhasmsbus\" name=\"linha\" onchange=\"javascript: frmFiltro.submit();\"><option value=\"0\">---</option><option value=\"508\">508 </option><option value=\"602\">602 </option></select></form></div><div class=\"clear\"></div></div><table id=\"smsBusResults\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><th>Linha</th><th>Hora Prevista</th><th>Tempo de Espera</th></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_602\" title=\"\" href=\"/pt/viajar/linhas/?linha=602 \">602 </a></li></ul>&nbsp;CC.VIVACCI-F</td><td><i>a passar</i></td><td></td></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_508\" title=\"\" href=\"/pt/viajar/linhas/?linha=508 \">508 </a></li></ul>&nbsp;FREIXIEIRO -</td><td><i>00:24</i></td><td>15min</td></tr></table>";
 
 var stationLines = [];
-var infos = [];
-
-var station;
+var runStation;
 
 // Programm argumments and commands
 program
@@ -23,7 +22,7 @@ program
     .arguments('<busStopCode>')
     .option('-l, --line <lineNumber>', 'See only buses of a certain line. Example: 205')
     .action(function (busStopCode) {
-        station = busStopCode.toUpperCase();
+        runStation = busStopCode.toUpperCase();
     });
 program.parse(process.argv);
 
@@ -70,29 +69,29 @@ program.parse(process.argv);
 // });
 
 function getTime() {
-    var date = new Date();
+    let date = new Date();
 
-    var hour = date.getHours();
+    let hour = date.getHours();
     hour = (hour < 10 ? '0' : '') + hour;
 
-    var min = date.getMinutes();
+    let min = date.getMinutes();
     min = (min < 10 ? '0' : '') + min;
 
     return hour + ':' + min;
 }
 
 function getLinesOfStation(station) {
-    var url = 'http://www.stcp.pt/pt/itinerarium/callservice.php?action=srchstoplines&stopname=' + station;
+    let url = 'http://www.stcp.pt/pt/itinerarium/callservice.php?action=srchstoplines&stopname=' + station;
 
     request(url, function (err, resp, body) {
         if (err) {
             throw err;
         }
 
-        var json = JSON.parse(body);
+        let json = JSON.parse(body);
 
         if (json[0] !== undefined) {
-            for (var x = 0; x < json[0].lines.length; x++) {
+            for (let x = 0; x < json[0].lines.length; x++) {
                 stationLines.push(json[0].lines[x].code);
             }
         }
@@ -103,7 +102,7 @@ function processTheInfo(parsedInfo) {
     if (parsedInfo[3] == null) {
         notifier.notify({
             title: 'You just missed ' + parsedInfo[0],
-            message: parsedInfo[0] + ' now passing in ' + station,
+            message: parsedInfo[0] + ' now passing in ' + runStation,
             sound: true,
             wait: false
         });
@@ -111,7 +110,7 @@ function processTheInfo(parsedInfo) {
         if (parsedInfo[3].match(/\d+/g) <= 10) {
             notifier.notify({
                 title: parsedInfo[3] + ' to ' + parsedInfo[0],
-                message: 'at ' + station,
+                message: 'at ' + runStation,
                 sound: true,
                 wait: false
             });
@@ -120,7 +119,7 @@ function processTheInfo(parsedInfo) {
 }
 
 function req(station, line) {
-    var url = 'http://www.stcp.pt/itinerarium/soapclient.php?codigo=' + station + '&linha=' + line;
+    let url = 'http://www.stcp.pt/itinerarium/soapclient.php?codigo=' + station + '&linha=' + line;
 
     request(url, function (err, resp, body) {
         if (err) {
@@ -131,12 +130,12 @@ function req(station, line) {
         $ = cheerio.load(body);
         screen.append(reqtimetext);
 
-        var erros = $('.msgBox span').text();
+        let erros = $('.msgBox span').text();
 
-        if (erros.substring(0, 17) == 'Nao ha autocarros') {         // got no buses warning
+        if (erros.substring(0, 17) === 'Nao ha autocarros') {         // got no buses warning
             reqtimetext.setText('Last request: ' + getTime());
             reqtimetext.pushLine('There are no buses on the next 60 minutes.');
-        } else if (erros.substring(0, 18) == 'Por favor, utilize') { // got wrong station code warning
+        } else if (erros.substring(0, 18) === 'Por favor, utilize') { // got wrong station code warning
             list.setText('Please, enter a valid bus stop code.');
             clearInterval(intervalID);
             reqtimetext.setText('Timmer stopped. You can quit the app now.');
@@ -169,6 +168,27 @@ function req(station, line) {
     });
 }
 
+function notify(info) {
+
+    if (info.time === '') {
+        notifier.notify({
+            title: "You just missed " + info.line,
+            message: info.line + " is now passing in " + runStation,
+            sound: true,
+            icon: path.join(__dirname, 'STCP.png'),
+            timeout: 10
+        })
+    } else if (info.time.match(/\d+/g) <= 10) {
+        notifier.notify({
+            title: info.time + ' to ' + info.line,
+            message: 'at ' + runStation,
+            sound: true,
+            icon: path.join(__dirname, 'STCP.png'),
+            timeout: 5
+        })
+    }
+}
+
 
 function parseResults(body) {
     let bodyParsed = [];
@@ -191,6 +211,7 @@ function parseResults(body) {
 }
 
 function updateInfos(time, parsed) {
+
     if (parsed.warnings.includes('Nao ha autocarros previstos para a paragem')) {
         console.log("não há autocarros");
         console.log(parsed.warnings);
@@ -199,8 +220,10 @@ function updateInfos(time, parsed) {
         console.log(parsed.warnings);
     } else {
         console.log("update e console.log..........");
-        for (let line of parsed.results) {
-            console.log(line.line + ": " + line.hours + " (" + line.time + ")");
+        for (let l of parsed.results) {
+            console.log(l.line + ": " + l.hours + " (" + l.time + ")");
+
+            notify(l);
         }
     }
 }
@@ -222,10 +245,10 @@ function req2(station, line) {
 if (!program.args.length) {  // if no arguments passed
     program.help();           // print help
 } else {                    // else, normal program
-    var line = (program.line === undefined) ? 0 : program.line.toUpperCase();
+    let runLine = (program.line === undefined) ? 0 : program.line.toUpperCase();
 
     //getLinesOfStation(station);
 
-    req2(station, line);
+    req2(runStation, runLine);
     //var intervalID = setInterval(req, 30000); // 30000ms = 30s
 }
