@@ -12,6 +12,7 @@ const HTMLOffline = "<div id=\"smsBusHeader\"><div class=\"filtro\"><a href=\"ht
 const HTMLAPassar = "<div id=\"smsBusHeader\"><div class=\"filtro\"><a href=\"http://www.stcp.pt/smsBusMicroSite/index.html\" target=\"_blank\"><img border=\"0\" src=\"/temas/stcp/imgs/logo-smsbus.jpg\" /></a><form action=\"\" id=\"frmFiltro\"><label for=\"linhasmsbus\">Filtar por linha</label><input type=\"hidden\" name=\"paragem\" value=\"srpt1\" /><input type=\"hidden\" name=\"t\" value=\"smsbus\" /><select id=\"linhasmsbus\" name=\"linha\" onchange=\"javascript: frmFiltro.submit();\"><option value=\"0\">---</option><option value=\"508\">508 </option><option value=\"602\">602 </option></select></form></div><div class=\"clear\"></div></div><table id=\"smsBusResults\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><th>Linha</th><th>Hora Prevista</th><th>Tempo de Espera</th></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_602\" title=\"\" href=\"/pt/viajar/linhas/?linha=602 \">602 </a></li></ul>&nbsp;CC.VIVACCI-F</td><td><i>a passar</i></td><td></td></tr><tr class=\"even\"><td><ul class=\"linhasAssoc\"><li><a target=\"_self\" class=\"linha_508\" title=\"\" href=\"/pt/viajar/linhas/?linha=508 \">508 </a></li></ul>&nbsp;FREIXIEIRO -</td><td><i>00:24</i></td><td>15min</td></tr></table>";
 
 let runStation;
+let runLine;
 
 // Programm argumments and commands
 // TODO: add option to set the time window to get notifications
@@ -23,6 +24,7 @@ program
     .option('-l, --line <lineNumber>', 'See only buses of a certain line. Example: 205')
     .action(function (busStopCode) {
         runStation = busStopCode.toUpperCase();
+        runLine = (program.line === undefined) ? 0 : program.line;
     });
 program.parse(process.argv);
 
@@ -86,6 +88,31 @@ function getTime() {
     return hour + ':' + min;
 }
 
+function getLinesOfStation(station) {
+
+    let options = {
+        uri: "http://www.stcp.pt/pt/itinerarium/callservice.php?action=srchstoplines&stopname="+station,
+        json: true
+    };
+
+    return rp(options)
+        .then(function (resp) {
+            if(resp[0] !== undefined){
+                let codes = [];
+
+                for (let x = 0; x < resp[0].lines.length; x++) {
+                    codes.push(resp[0].lines[x].code);
+                }
+
+                return codes;
+            }
+        })
+        .catch(function (err) {
+            // Crawling failed or Cheerio choked...
+            throw err;
+        });
+};
+
 function print(info) {
     console.log(info.line + ": " + info.hours + " (" + info.time + ")");
 }
@@ -113,33 +140,43 @@ function notify(info) {
 function processResults(results) {
     let tableText = [["Linha", "Horas", "Tempo"]];
 
-    if (results.warnings.includes('Nao ha autocarros previstos para a paragem')) {
+    if (results.warnings.includes('Nao ha autocarros previstos para a paragem')) {   // got no buses warning
         // console.log("não há autocarros");
         // console.log(results.warnings);
         reqtimetext.pushLine('There are no buses on the next 60 minutes.');
 
-    } else if (results.warnings.includes('Por favor, utilize o codigo SMSBUS')) {
+    } else if (results.warnings.includes('Por favor, utilize o codigo SMSBUS')) {   // got wrong station code warning
         // console.log("por favor utilize codigo certo");
         // console.log(results.warnings);
         list.setText('Please, enter a valid bus stop code.');
         clearInterval(intervalID);
         reqtimetext.setText('Timmer stopped. You can quit the app now.');
-    } else {
-        //console.log("update e console.log..........");
-        reqtimetext.setText('Last request: ' + getTime());
-        for (let l of results.results) {
-            tableText.push([l.line, l.hours, l.time]);
-            notify(l);
+    } else {                                                                       // got no warnings but...
+        if (results.results.length > 0){                                              // found time results
+            //console.log("update e console.log..........");
+            reqtimetext.setText('Last request: ' + getTime());
+            for (let l of results.results) {
+                tableText.push([l.line, l.hours, l.time]);
+                notify(l);
+            }
+            table.setData(tableText);
+            table.setFront();
+        } else {                                                                      // didn't found any time result
+            if (stationLines.indexOf(runLine) > -1) {
+                list.setText("There are no buses on the next 60 minutes");
+            } else {
+                list.setText("Line "+runLine+" doesn't pass on "+runStation+".\n\nHere are the lines that pass on "+runStation+":\n"+stationLines);
+                clearInterval(intervalID);
+                reqtimetext.setText("Timmer stopped. You can quit the app now.");
+            }
         }
-        table.setData(tableText);
-        table.setFront();
     }
     screen.render();
 }
 
 function req(station, line){
     let options = {
-        uri: "http://www.stcp.pt/itinerarium/soapclient.php?codigo=" + station,
+        uri: "http://www.stcp.pt/itinerarium/soapclient.php?codigo=" + station +'&linha='+ line,
         transform: function (body) {
             return cheerio.load(body);
         }
@@ -179,10 +216,12 @@ function req(station, line){
 if (!program.args.length) {  // if no arguments passed
     program.help();          // print help
 } else {                     // else, normal program
-    let runLine = (program.line === undefined) ? 0 : program.line.toUpperCase();    // TODO: add line filter
+    var stationLines = [];
 
-    //getLinesOfStation(station);    // TODO: add verification that line passes at station
+    getLinesOfStation(runStation).then((stationlines) => {
+        stationLines = stationlines;
+    });
 
     req(runStation, runLine);
-    var intervalID = setInterval(req, 30000, runStation); // 30000ms = 30s
+    var intervalID = setInterval(req, 30000, runStation, runLine); // 30000ms = 30s
 }
