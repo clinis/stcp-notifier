@@ -13,18 +13,20 @@ const HTMLAPassar = "<div id=\"smsBusHeader\"><div class=\"filtro\"><a href=\"ht
 
 let runStation;
 let runLine;
+let runMinETA;
 
 // Programm argumments and commands
-// TODO: add option to set the time window to get notifications
 program
     .version('0.0.4')
     .description('Get the remaining times of the next buses at a bus stop using that bus stop code.')
     .usage('<bus stop code>. Example: stcp IPO5')
     .arguments('<busStopCode>')
     .option('-l, --line <lineNumber>', 'See only buses of a certain line. Example: 205')
+    .option('-t, --eta <minutes>', 'Set the minutes of ETA that trigger notifications.', parseInt)
     .action(function (busStopCode) {
         runStation = busStopCode.toUpperCase();
         runLine = (program.line === undefined) ? 0 : program.line;
+        runMinETA = (program.eta === undefined) ? 10 : program.eta;
     });
 program.parse(process.argv);
 
@@ -111,7 +113,7 @@ function getLinesOfStation(station) {
             // Crawling failed or Cheerio choked...
             throw err;
         });
-};
+}
 
 function print(info) {
     console.log(info.line + ": " + info.hours + " (" + info.time + ")");
@@ -126,7 +128,7 @@ function notify(info) {
             icon: path.join(__dirname, 'STCP.png'),
             timeout: 10
         })
-    } else if (info.time.match(/\d+/g) <= 10) {
+    } else if (info.time.match(/\d+/g) <= runMinETA) {
         notifier.notify({
             title: info.time + ' to ' + info.line,
             message: 'at ' + runStation,
