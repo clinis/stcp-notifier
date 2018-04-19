@@ -1,13 +1,19 @@
 {
-  "name": "stcparser",
-  "version": "0.0.4",
-  "description": "Node app to get the time of STCP buses.",
-  "main": "stcp.js",
+  "name": "stcp-notifier",
+  "version": "0.0.5",
+  "description": "Node CLI to get ETA of the STCP buses at a given bus stop.",
+  "main": "dist/stcp.js",
   "bin": {
-    "stcp": "./stcp.js"
+    "stcp": "dist/stcp.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean-dist": "rm -rf dist && mkdir dist",
+    "build-dist": "babel src --out-dir dist --copy-files",
+    "build": "npm run clean-dist && npm run build-dist"
   },
   "dependencies": {
     "blessed": "^0.1.81",
