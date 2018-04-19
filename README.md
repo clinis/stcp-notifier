@@ -1,21 +1,24 @@
-# STCP scrapper
+# Node STCP notifier CLI
 
-## Synopsis
+Very simple Node.js application to scrap the [STCP website](http://www.stcp.pt) to get the ETA of the next buses at a bus stop.
 
-Very simple Node.js application to scrap the [STCP](http://www.stcp.pt) website to get the remaining times of the next buses at a bus stop.
-
-Based on the examples of [this article](https://blog.miguelgrinberg.com/post/easy-web-scraping-with-nodejs).
 
 ## Motivation
 
 With this application I don't have to keep refreshing their website and I can get a notification when I need to get out to the bus stop.
 This way I don't loose my bus and I don't need to waste time waiting at the stop. :smile:
 
+
 ## Functionality
-What is does:
-- automatic requests every minute;
-- notifications when bus is less than 10 minutes away;
-- filter results to a specific line.
+What it does:
+- automatic requests every 30 seconds;
+- filter results to a specific line;
+- set notifications when bus is less than *x* minutes away.
+
+
+## Demonstration
+![Demonstration gif](DEMO.gif)
+
 
 ## Explanation
 
@@ -64,6 +67,7 @@ Here is an example of the returned HTML:
 
 The information we want is in the table with id `smsBusResults` in each of its rows with class `even`.
 
+
 ## Getting Started
 
 1. Clone or download this repo;
@@ -72,4 +76,6 @@ The information we want is in the table with id `smsBusResults` in each of its r
 
 3. Install Node modules with `npm install`;
 
-4. Run the Node application with `node stcp.js <station code>`.
+4. Run the Node application with `node stcp.js <bus stop code>`.
+
+5. For easier usage, you can *link* the module with `npm link`; now you can use the CLI with just `stcp <bus stop code>`.
