@@ -1,6 +1,6 @@
 {
   "name": "stcp-notifier",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Node CLI to get ETA of the STCP buses at a given bus stop.",
   "main": "dist/stcp.js",
   "bin": {
@@ -40,6 +40,6 @@
   "homepage": "https://github.com/clinis/STCParser#readme",
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.1"
+    "babel-preset-env": "^1.7.0"
   }
 }

@@ -12,9 +12,9 @@ let runStation;
 let runLine;
 let runMinETA;
 
-// Programm argumments and commands
+// Program arguments and commands
 program
-    .version('0.0.4')
+    .version('0.0.6')
     .description('Tempos de chegada dos próximos autocarros da STCP numa certa paragem através do código SMS BUS dessa paragem.')
     .usage('<código SMS BUS>. Por exemplo: stcp IPO5')
     .arguments('<busStopCode>')
@@ -31,7 +31,7 @@ program.parse(process.argv);
 let screen = blessed.screen();
 
 // Quit on Escape, q, or Control-C.
-screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+screen.key(['escape', 'q', 'C-c'], function () {
     return process.exit(0);
 });
 
